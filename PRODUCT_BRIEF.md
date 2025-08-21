@@ -23,16 +23,19 @@ Verdant — Deep Product & Tech Brief (Cursor-ready)
 - ✅ Documentation: Single authoritative PRODUCT_BRIEF.md at project root
 - ✅ React Query v5 migration for all read hooks (useBeds, useBed, usePlants, usePlant, useTasks, useBedPhotos, usePlantPhotos)
 - ✅ Expo Notifications aligned with current SDK (proper trigger types, NotificationBehavior, scheduleLocal/cancel signatures)
+- ✅ Test isolation: Tests and Supabase functions excluded from main app typechecking and linting.
 - ✅ Reanimated hook usage compliance (useAnimatedStyle calls moved to component top-level)
 - ✅ Repository interfaces aligned: PhotoRepo method names match ports, all CRUD operations implemented
 - ✅ Domain model consistency: Plant interface includes bed_id, Task interface normalized with bed_id/plant_id
 - ✅ Presenter layer: TaskPresenter, PlantPresenter, PhotoPresenter map domain (snake_case) to UI (camelCase)
 - ✅ Export hygiene: Named exports for components (TaskList, TaskItem), canonical useTaskStore export
+- ✅ TypeScript Compile-Time Fixes: Applied various fixes including tsconfig.json updates, hooks folder hygiene, new Colors and useColorScheme files, useThemeColor typing, default exports, updated imports, repo API naming, React Query v5 shapes (isPending, gcTime), and component prop typing.
 - ✅ TypeScript compliance: 70% error reduction, exports aligned, React Query v5 options (cacheTime→gcTime)
 - ✅ Gesture API alignment: PlantSprite uses maxDuration instead of deprecated minDuration
 - ✅ Repo method standardization: getPlantsForBed, getPlantPhotos, getBedPhotos naming consistency
 - ✅ Store usage patterns: useTaskStore/useAuthStore hooks throughout, no direct store imports
 - ✅ Component prop typing: Photo[] arrays properly typed, PhotoTimeline accepts photos prop
+- ✅ Testing infrastructure: Vitest configuration with comprehensive React Native mocking, path resolution, and environment setup
 
 1) Project Overview
 
@@ -90,7 +93,7 @@ Phase 2
 4) Technical Stack & Architecture
 
 4.1 Framework
-	•	Expo + React Native (TypeScript) for iOS first.
+	•	Expo Managed Workflow + React Native (TypeScript) for iOS first.
 	•	Supabase for auth, DB, storage, functions.
 	•	Tauri/Electron wrapper for desktop later.
 
@@ -112,9 +115,10 @@ Phase 2
 	•	Adapters: Supabase DB ✅, Supabase Storage ✅, Expo Notifications ✅ (NotifierExpo with current SDK compliance).
 	•	Infra: Supabase client ✅, offline cache ⚠️ TODO, edge functions ✅.
 	•	Presenters: BedPresenter ✅, PlantPresenter ✅, PhotoPresenter ✅, TaskPresenter ✅.
-	•	Testing: Vitest setup ✅, comprehensive audit tooling ✅, CI workflow template ✅.
+	•	Testing: Vitest setup with React Native mocking ✅, comprehensive audit tooling ✅, CI workflow template ✅.
 	•	DevOps: Dependency management scripts ✅, health check automation ✅, SDK alignment validation ✅.
 	•	Architecture: Unified component structure ✅, consistent import paths ✅, single authoritative documentation ✅.
+	•	Workflow: Expo Managed (no native folders), test isolation for faster compilation ✅.
 
 ⸻
 

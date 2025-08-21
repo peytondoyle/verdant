@@ -40,9 +40,11 @@ echo "🔎 DateTimePicker Import Usage:"
 grep -R "@react-native-community/datetimepicker" -n app src || true
 echo
 
-# 7. TypeScript Check
-echo "🔧 TypeScript Type Checking:"
-npx tsc --noEmit
+# 7. TypeScript Check (App Only)
+echo "🔧 TypeScript Type Checking (App Only - Tests Isolated):"
+echo "Running app typecheck (excludes src/tests/ and supabase/functions/)..."
+npm run typecheck
+echo "ℹ️ To typecheck tests separately, run: npm run typecheck:test"
 echo
 
 # 8. Linting

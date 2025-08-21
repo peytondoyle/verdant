@@ -111,6 +111,17 @@ If you see `Unable to resolve "@react-native-community/datetimepicker"`:
 - **`npm run start:clear`**: When Metro bundler has stale cache, after major dependency changes
 - **`npm run typecheck`**: Before commits, to catch TypeScript errors early
 
+## Workflow & Typecheck
+
+**Expo Managed Workflow**: This project uses Expo Managed workflow. If native code is needed in the future, run `npx expo prebuild` to migrate to a development build workflow.
+
+**Test Isolation**: TypeScript compilation and linting are configured to exclude test files for faster development:
+
+- **App typecheck**: `npm run typecheck` (excludes `src/tests/` and `supabase/functions/`)
+- **Test typecheck**: `npm run typecheck:test` (typechecks tests only)
+
+This prevents test files from interfering with the main app compilation while keeping tests intact for future development.
+
 ## Join the community
 
 Join our community of developers creating universal apps.
