@@ -36,6 +36,7 @@ Verdant — Deep Product & Tech Brief (Cursor-ready)
 - ✅ Store usage patterns: useTaskStore/useAuthStore hooks throughout, no direct store imports
 - ✅ Component prop typing: Photo[] arrays properly typed, PhotoTimeline accepts photos prop
 - ✅ Testing infrastructure: Vitest configuration with comprehensive React Native mocking, path resolution, and environment setup
+- ✅ Lint hygiene: All ESLint warnings resolved with surgical fixes, no functional changes
 
 1) Project Overview
 
@@ -115,9 +116,9 @@ Phase 2
 	•	Adapters: Supabase DB ✅, Supabase Storage ✅, Expo Notifications ✅ (NotifierExpo with current SDK compliance).
 	•	Infra: Supabase client ✅, offline cache ⚠️ TODO, edge functions ✅.
 	•	Presenters: BedPresenter ✅, PlantPresenter ✅, PhotoPresenter ✅, TaskPresenter ✅.
-	•	Testing: Vitest setup with React Native mocking ✅, comprehensive audit tooling ✅, CI workflow template ✅.
+	•	Testing: Vitest setup with React Native mocking ✅, comprehensive audit tooling ✅, CI workflow template ✅. Unit test suite aligned to domain types via factories ✅; tests isolated from app typecheck; vitest + Expo shims configured in `src/tests/setup.ts` ✅. Test scaffolding: vitest configured; 4 smoke tests (BedCanvas, taskStore, AppLoads, TaskList) + test scripts (npm test, npm run test:ui) ✅. Test factories (makeBed, makePlant, makeTask) satisfy domain interface requirements exactly ✅.
 	•	DevOps: Dependency management scripts ✅, health check automation ✅, SDK alignment validation ✅.
-	•	Architecture: Unified component structure ✅, consistent import paths ✅, single authoritative documentation ✅.
+	•	Architecture: Unified component structure ✅, consistent import paths ✅, single authoritative documentation ✅. Normalized base image URL typing (domain uses string|null; UI accepts undefined|null) ✅.
 	•	Workflow: Expo Managed (no native folders), test isolation for faster compilation ✅.
 
 ⸻

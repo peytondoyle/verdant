@@ -1,3 +1,4 @@
+import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import {
     Alert,
@@ -28,13 +29,14 @@ export default function TasksSandbox() {
     initNotifications();
     checkPermissionStatus();
     updateScheduledCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- demo sandbox effect; re-run not required in prod flows
   }, []);
 
   const checkPermissionStatus = async () => {
     try {
       const hasPermission = await requestNotificationPermissions();
       setPermissionStatus(hasPermission ? 'granted' : 'denied');
-    } catch (error) {
+    } catch {
       setPermissionStatus('error');
     }
   };
@@ -43,8 +45,8 @@ export default function TasksSandbox() {
     try {
       const notifications = await taskService.getScheduledNotifications();
       setScheduledCount(notifications.length);
-    } catch (error) {
-      console.error('Error getting scheduled notifications:', error);
+    } catch (_error) {
+      console.error('Error getting scheduled notifications:', _error);
     }
   };
 
@@ -130,7 +132,12 @@ export default function TasksSandbox() {
     try {
       const notifications = await taskService.getScheduledNotifications();
       const notificationList = notifications
-        .map((n, i) => `${i + 1}. ${n.content.title} - ${new Date(n.trigger.value).toLocaleString()}`)
+        .map((n: Notifications.NotificationRequest, i: number) => {
+          const when =
+            (n.trigger && 'date' in n.trigger && n.trigger.date) ?
+              new Date(n.trigger.date).toLocaleString() : '—';
+          return `${i + 1}. ${n.content.title} - ${when}`;
+        })
         .join('\n');
 
       Alert.alert(
@@ -260,7 +267,7 @@ export default function TasksSandbox() {
         <Text style={styles.instructionsText}>
           • Make sure to allow notifications when prompted{'\n'}
           • Tasks will appear in your notification center at the scheduled time{'\n'}
-          • Use "Show Scheduled" to see all pending notifications{'\n'}
+          • Use &quot;Show Scheduled&quot; to see all pending notifications{'\n'}
           • Test with short durations first (1-2 minutes){'\n'}
           • Clear tasks when done testing to avoid notification spam
         </Text>

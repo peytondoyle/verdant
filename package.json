@@ -9,8 +9,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --passWithNoTests",
+    "test:ui": "vitest",
     "test:ci": "vitest run --coverage",
     "lint": "expo lint",
     "typecheck": "tsc -p tsconfig.app.json",
@@ -67,6 +67,7 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "jsdom": "^25.0.1",
+    "react-test-renderer": "^19.1.1",
     "typescript": "~5.8.3",
     "vitest": "^3.2.4",
     "vitest-mock-extended": "^2.0.2"

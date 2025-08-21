@@ -44,6 +44,10 @@ export class SupabasePlantRepo implements PlantRepo {
     }));
   }
 
+  async getPlantsForBed(bedId: string): Promise<Plant[]> { 
+    return this.listPlants(bedId); 
+  }
+
   async create(plant: Omit<Plant, 'id' | 'created_at'>): Promise<Plant> {
     const { data, error } = await supabase
       .from('plants')

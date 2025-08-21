@@ -16,6 +16,7 @@ export interface Plant {
 
 export interface PlantRepo {
   listPlants(bedId: string): Promise<Plant[]>;
+  getPlantsForBed(bedId: string): Promise<Plant[]>;
   getPlant(id: string): Promise<Plant | null>;
   create(plant: Omit<Plant, 'id' | 'created_at'>): Promise<Plant>;
   update(id: string, updates: Partial<Plant>): Promise<Plant>;
@@ -75,7 +76,7 @@ export interface Bed {
   id: string;
   user_id: string;
   name: string;
-  base_image_url?: string;
+  base_image_url: string | null;
   created_at: Date;
   deleted_at?: Date;
 }

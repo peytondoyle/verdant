@@ -53,8 +53,9 @@ export class NotifierExpo implements Notifier {
   }
 
   private async requestPermissions(): Promise<boolean> {
-    if (!Device.isDevice) {
-      console.log('Simulator: skipping push token fetch');
+    // DevTest guard: Skip on simulators and test environments
+    if (!Device.isDevice || __DEV__) {
+      console.log('DevTest/Simulator: skipping push token fetch');
       return true;
     }
 
@@ -120,10 +121,9 @@ export class NotifierExpo implements Notifier {
 
       // Always use simple date trigger for now
       trigger = {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: params.date instanceof Date ? params.date : new Date(params.date),
         channelId: Platform.OS === 'android' ? 'garden-tasks' : undefined,
-      };
+      } as Notifications.DateTriggerInput;
 
       await Notifications.scheduleNotificationAsync({
         identifier: identifier,

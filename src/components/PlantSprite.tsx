@@ -103,7 +103,7 @@ const PlantSprite: React.FC<PlantSpriteProps> = ({
 
   return (
     <GestureDetector gesture={Gesture.Exclusive(tapGesture, panGesture)}>
-      <Animated.View style={[styles.spriteContainer, animatedStyle]}>
+      <Animated.View style={[styles.spriteContainer, animatedStyle]} testID={`plant-sprite-${id}`}>
         <Animated.View>
           <Canvas style={{ width: spriteSize, height: spriteSize }}>
             <Group>

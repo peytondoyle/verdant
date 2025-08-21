@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabase";
 
 export class SupabaseMediaStorage implements MediaStorage {
   private async uploadFile(file: File, path: string, bucket: string): Promise<string> {
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, { 
+    const { error } = await supabase.storage.from(bucket).upload(path, file, { 
       cacheControl: '3600',
       upsert: true,
     });

@@ -8,7 +8,7 @@ interface BedsState {
   selectedBed: Bed | null;
 
   // Actions
-  createBed: (bedData: { name: string; base_image_url?: string }) => Promise<Bed>;
+  createBed: (bedData: { name: string; base_image_url?: string | null }) => Promise<Bed>;
   updateBed: (id: string, updates: Partial<Bed>) => Promise<Bed>;
   deleteBed: (id: string) => Promise<void>;
   selectBed: (bed: Bed | null) => void;
@@ -27,7 +27,13 @@ export const useBedsStore = create<BedsState>((set, get) => ({
 
   // Actions
   createBed: async (bedData) => {
-    const newBed = await bedRepo.create(bedData);
+    // Convert undefined → null for domain consistency
+    const domainBedData = {
+      ...bedData,
+      base_image_url: bedData.base_image_url ?? null,
+    };
+    
+    const newBed = await bedRepo.create(domainBedData);
     
     // Update local state
     const currentBeds = get().beds;

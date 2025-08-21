@@ -1,5 +1,6 @@
 import { QueryClient, useQuery } from '@tanstack/react-query';
-import { bedRepo, plantRepo } from '../services';
+import { plantRepo } from '../services';
+import { SupabaseBedRepo } from '../services/db/SupabaseBedRepo';
 
 const queryClient = new QueryClient();
 
@@ -8,17 +9,18 @@ export const bedKeys = {
   detail: (id: string) => [...bedKeys.all, 'detail', id] as const,
 };
 
-export function useBed(id: string) {
+export function useBed(bedId: string) {
   return useQuery({
-    queryKey: bedKeys.detail(id),
+    queryKey: ['bed', bedId],
     queryFn: async () => {
-      const bed = await bedRepo.getBed(id);
-      const plants = await plantRepo.getPlantsForBed(id);
+      const bed = await new SupabaseBedRepo().getBed(bedId);
+      if (!bed) {
+        throw new Error('Bed not found');
+      }
+      const plants = await plantRepo.getPlantsForBed(bedId);
       return { bed, plants };
     },
-    enabled: !!id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 }
 

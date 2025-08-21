@@ -11,11 +11,11 @@ export const plantKeys = {
 
 export function usePlants(bedId: string) {
   return useQuery({
-    queryKey: plantKeys.lists(bedId),
-    queryFn: () => plantRepo.getPlantsForBed(bedId),
-    enabled: !!bedId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    queryKey: ['plants', bedId],
+    queryFn: async () => {
+      return plantRepo.getPlantsForBed(bedId);
+    },
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 }
 

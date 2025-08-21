@@ -56,18 +56,14 @@ const PhotoTimeline: React.FC<PhotoTimelineProps> = ({ plantId, bedId, photos: p
     .onUpdate((event) => {
       scrollX.value = Math.max(0, Math.min(contentWidth - screenWidth, scrollX.value - event.translationX));
     })
-    .onEnd((event) => {
+    .onEnd(() => {
       // Optional: Add a spring animation for smoother snapping after pan
       // For now, it just stops where it is
     });
 
   const renderItem = React.useCallback(({
-    item,
-    index
-  }: { item: PhotoPresenter; index: number }) => {
-    const photoDate = new Date(item.capturedOn); // Use capturedOn from PhotoPresenter
-    const month = photoDate.toLocaleString('default', { month: 'short' });
-
+    item
+  }: { item: PhotoPresenter }) => {
     return (
       <Animated.View style={styles.photoContainer}>
         <Image

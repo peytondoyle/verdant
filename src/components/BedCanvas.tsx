@@ -4,15 +4,15 @@ import React from 'react';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withDecay, withSpring } from 'react-native-reanimated';
-import { usePlantsStore } from '../../src/state/plantsStore';
+import { usePlantsStore } from '../state/plantsStore';
 import PlantSprite from './PlantSprite';
 import { ThemedText as Text } from './ThemedText';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface BedCanvasProps {
-  bed: { id: string; base_image_url: string | null; };
-  plants: { id: string; x: number; y: number; z_layer: number; imageUrl: string; }[]; // Add imageUrl here
+  bed: { id: string; base_image_url?: string | null };
+  plants: { id: string; x: number; y: number; z_layer: number; sprite_url?: string }[];
   onPlantSelect?: (id: string | null) => void;
   onAddPlant: () => void;
   onAddPhoto: () => void;
@@ -90,7 +90,7 @@ const BedCanvas: React.FC<BedCanvasProps> = ({
   });
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="bed-canvas">
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[{ width: canvasWidth, height: screenHeight }, animatedStyle]}>
           <Canvas style={StyleSheet.absoluteFill}>
@@ -116,7 +116,7 @@ const BedCanvas: React.FC<BedCanvasProps> = ({
               <PlantSprite
                 key={plant.id}
                 id={plant.id}
-                imageUrl={plant.imageUrl} // Pass imageUrl
+                imageUrl={plant.sprite_url || ''} // Pass sprite_url
                 initialX={plant.x}
                 initialY={plant.y}
                 initialZ={plant.z_layer}
@@ -168,4 +168,5 @@ const styles = StyleSheet.create({
   },
 });
 
+export { BedCanvas };
 export default BedCanvas;

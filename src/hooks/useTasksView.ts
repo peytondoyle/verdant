@@ -34,7 +34,7 @@ const MOCK_TASKS: Task[] = [
 ];
 
 export const useTasksView = () => {
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
+  const [tasks] = useState<Task[]>(MOCK_TASKS);
 
   const handleSelectTask = (taskId: string) => {
     console.log(`Task ${taskId} selected in hook`);

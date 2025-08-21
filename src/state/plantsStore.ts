@@ -31,7 +31,7 @@ export const usePlantsStore = create<PlantsState>((set, get) => {
   const debouncedUpdatePlant = debounce(async (id: string, updates: Partial<Plant>) => {
     try {
       await plantRepo.update(id, updates);
-    } catch (error) {
+    } catch {
       // Rollback on error
       set(state => {
         const plants = state.plants.map(p =>

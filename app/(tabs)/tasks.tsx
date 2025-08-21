@@ -27,7 +27,7 @@ export default function TasksScreen() {
     }
 
     try {
-      const newTask = await taskStore.createTask({
+      await taskStore.createTask({
         kind: title as TaskKind, // Assuming title can be mapped to TaskKind or handled otherwise
         due_on: dueDate,
         repeat_rule: {

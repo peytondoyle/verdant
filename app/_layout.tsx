@@ -13,6 +13,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     authStore.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time bootstrap; store subscribes internally
   }, []);
 
   useEffect(() => {
