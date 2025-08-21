@@ -1,5 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery } from '@tanstack/react-query';
 import { bedRepo } from '../services';
+
+const queryClient = new QueryClient();
 
 export const bedKeys = {
   all: ['beds'] as const,
@@ -12,6 +14,10 @@ export function useBeds() {
     queryKey: bedKeys.lists(),
     queryFn: () => bedRepo.listBeds(),
     staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 10, // 10 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
   });
+}
+
+export function invalidateBeds() {
+  queryClient.invalidateQueries({ queryKey: bedKeys.lists() });
 }

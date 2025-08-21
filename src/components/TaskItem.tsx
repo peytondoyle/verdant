@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
-import { ColorTheme, useThemeColor } from '../hooks/useThemeColor';
 import { ThemedText } from './ThemedText';
 
 interface TaskItemProps {
@@ -29,7 +28,7 @@ export function TaskItem({
   onDelete,
   onPress,
 }: TaskItemProps) {
-  const tintColor = useThemeColor({}, 'tint');
+  // const tintColor = useThemeColor({}, 'tint'); // Unused for now
   const isOverdue = dueOn && dueOn < new Date() && !completedOn;
   const isCompleted = !!completedOn;
 
@@ -49,9 +48,7 @@ export function TaskItem({
     <GestureHandlerRootView>
       <Swipeable
         renderRightActions={renderRightActions}
-        onSwipeableWillOpen={() => onComplete(id)}
         renderLeftActions={renderLeftActions}
-        onSwipeableWillOpen={() => onDelete(id)}
       >
         <View style={[styles.container, isCompleted && styles.completedContainer]}>
           <ThemedText

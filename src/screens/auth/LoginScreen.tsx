@@ -2,33 +2,38 @@ import React, { useState } from 'react';
 import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
 
-const LoginScreen = () => {
+export default function LoginScreen() {
+  const { loginWithEmail, loginWithPhone, verifyPhoneOtp } = useAuth();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { loginWithEmail, loginWithSms } = useAuth();
+  const [otp, setOtp] = useState('');
+  const [phoneSent, setPhoneSent] = useState(false);
 
   const handleEmailLogin = async () => {
-    setLoading(true);
     try {
       await loginWithEmail(email);
-      Alert.alert('Check your email', 'A magic link has been sent to your email address.');
+      Alert.alert('Success', 'Magic link sent to your email!');
     } catch (error: any) {
       Alert.alert('Error', error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleSmsLogin = async () => {
-    setLoading(true);
+  const handlePhoneLogin = async () => {
     try {
-      await loginWithSms(phone);
-      Alert.alert('Check your phone', 'An OTP has been sent to your phone number.');
+      await loginWithPhone(phone);
+      setPhoneSent(true);
+      Alert.alert('Success', 'OTP sent to your phone!');
     } catch (error: any) {
       Alert.alert('Error', error.message);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    try {
+      await verifyPhoneOtp({ phone, token: otp });
+      Alert.alert('Success', 'Phone verified!');
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
     }
   };
 
@@ -43,22 +48,36 @@ const LoginScreen = () => {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <Button title="Login with Email" onPress={handleEmailLogin} disabled={loading} />
+      <Button title="Send Magic Link" onPress={handleEmailLogin} />
 
-      <Text style={styles.orText}>OR</Text>
+      <Text style={styles.orText}>- OR -</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number (e.g., +15551234567)"
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-        autoCapitalize="none"
-      />
-      <Button title="Login with SMS" onPress={handleSmsLogin} disabled={loading} />
+      {!phoneSent ? (
+        <View>
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+          />
+          <Button title="Send OTP" onPress={handlePhoneLogin} />
+        </View>
+      ) : (
+        <View>
+          <TextInput
+            style={styles.input}
+            placeholder="OTP"
+            value={otp}
+            onChangeText={setOtp}
+            keyboardType="number-pad"
+          />
+          <Button title="Verify OTP" onPress={handleVerifyOtp} />
+        </View>
+      )}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -73,16 +92,14 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    padding: 10,
+    height: 40,
+    borderColor: 'gray',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
     marginBottom: 10,
+    paddingHorizontal: 10,
   },
   orText: {
     marginVertical: 20,
-    fontSize: 18,
+    fontSize: 16,
   },
 });
-
-export default LoginScreen;

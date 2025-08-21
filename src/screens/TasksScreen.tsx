@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTasksView } from '../../hooks/useTasksView';
-import TaskList from '../components/TaskList';
+import { TaskList } from '../components/TaskList';
 
 const TasksScreen: React.FC = () => {
   const { tasks, onSelectTask } = useTasksView();

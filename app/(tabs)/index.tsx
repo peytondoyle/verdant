@@ -1,10 +1,10 @@
 
 import { Image, StyleSheet } from 'react-native';
 
-import { HelloWave } from '../../components/HelloWave';
-import ParallaxScrollView from '../../components/ParallaxScrollView';
-import { ThemedText } from '../../components/ThemedText';
-import { ThemedView } from '../../components/ThemedView';
+import { HelloWave } from '../../src/components/HelloWave';
+import ParallaxScrollView from '../../src/components/ParallaxScrollView';
+import { ThemedText } from '../../src/components/ThemedText';
+import { ThemedView } from '../../src/components/ThemedView';
 
 export default function HomeScreen() {
   return (
@@ -26,7 +26,7 @@ export default function HomeScreen() {
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>Tap the Explore tab to learn more about what's included in this starter app.</ThemedText>
+        <ThemedText>Tap the Explore tab to learn more about what&apos;s included in this starter app.</ThemedText>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>

@@ -40,7 +40,8 @@ export class TaskService {
           id: newTask.id,
           date: newTask.due_on,
           body: this.generateNotificationBody(newTask),
-          repeatRule: taskParams.repeat_rule,
+          title: '🌱 Garden Reminder',
+          repeat: taskParams.repeat_rule ? this.convertRepeatRule(taskParams.repeat_rule) : undefined,
         });
       } catch (notificationError) {
         console.warn('Failed to schedule notification for task:', notificationError);
@@ -150,6 +151,28 @@ export class TaskService {
       return await this.notifier.getAllScheduledNotifications();
     }
     return [];
+  }
+
+  private convertRepeatRule(repeatRuleStr: string): { kind: 'everyNDays' | 'weekly'; n?: number; days?: string[] } | undefined {
+    // Parse "every:N:days" format
+    if (repeatRuleStr.startsWith('every:')) {
+      const parts = repeatRuleStr.split(':');
+      if (parts.length === 3 && parts[2] === 'days') {
+        const interval = parseInt(parts[1], 10);
+        if (!isNaN(interval) && interval > 0) {
+          return { kind: 'everyNDays', n: interval };
+        }
+      }
+    }
+
+    // Parse "weekly:Mon,Thu" format
+    if (repeatRuleStr.startsWith('weekly:')) {
+      const daysStr = repeatRuleStr.substring(7); // Remove "weekly:"
+      const dayNames = daysStr.split(',').map(d => d.trim());
+      return { kind: 'weekly', days: dayNames };
+    }
+
+    return undefined;
   }
 
   // Static helper method to create a task with simple parameters (useful for quick task creation)

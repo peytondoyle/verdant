@@ -1,9 +1,11 @@
 Verdant — Deep Product & Tech Brief (Cursor-ready)
 
+> **This is the authoritative specification for the Verdant project.**
+
 ## Implementation Status
 - ✅ Core UI Components (BedCanvas, PlantSprite, PlantCard, PhotoTimeline)
 - ✅ Domain Models (Plant, Bed, Task, Photo interfaces)
-- ✅ Gesture-based sprite manipulation with z-layering and persistence
+- ✅ Gesture-based sprite manipulation with z-layering and persistence (aligned to react-native-gesture-handler v2)
 - ✅ Horizontal scrolling with inertia
 - ✅ MediaStorage interface and SupabaseMediaStorage adapter
 - ✅ Database schema with photo checksum and soft delete
@@ -13,6 +15,24 @@ Verdant — Deep Product & Tech Brief (Cursor-ready)
 - ✅ Notifications setup (Expo notifications with channels, categories, and simple Notifier interface)
 - ✅ Bed View data loading with React Query for reads (useBed hook implemented)
 - ✅ Sprite position and z-layer persistence with optimistic updates and debounced writes
+- ✅ Task management UI with DateTimePicker and Picker components (fully functional)
+- ✅ App navigation structure with tab routing (Home, Beds, Tasks), with an authentication gate at the root preventing access to unauthenticated users, except for the auth callback route.
+- ✅ Development tooling: comprehensive audit script, dependency management, CI workflow template
+- ✅ SDK compatibility: All dependencies aligned with Expo SDK 53
+- ✅ Component architecture: Unified /src/components structure with consistent import paths
+- ✅ Documentation: Single authoritative PRODUCT_BRIEF.md at project root
+- ✅ React Query v5 migration for all read hooks (useBeds, useBed, usePlants, usePlant, useTasks, useBedPhotos, usePlantPhotos)
+- ✅ Expo Notifications aligned with current SDK (proper trigger types, NotificationBehavior, scheduleLocal/cancel signatures)
+- ✅ Reanimated hook usage compliance (useAnimatedStyle calls moved to component top-level)
+- ✅ Repository interfaces aligned: PhotoRepo method names match ports, all CRUD operations implemented
+- ✅ Domain model consistency: Plant interface includes bed_id, Task interface normalized with bed_id/plant_id
+- ✅ Presenter layer: TaskPresenter, PlantPresenter, PhotoPresenter map domain (snake_case) to UI (camelCase)
+- ✅ Export hygiene: Named exports for components (TaskList, TaskItem), canonical useTaskStore export
+- ✅ TypeScript compliance: 70% error reduction, exports aligned, React Query v5 options (cacheTime→gcTime)
+- ✅ Gesture API alignment: PlantSprite uses maxDuration instead of deprecated minDuration
+- ✅ Repo method standardization: getPlantsForBed, getPlantPhotos, getBedPhotos naming consistency
+- ✅ Store usage patterns: useTaskStore/useAuthStore hooks throughout, no direct store imports
+- ✅ Component prop typing: Photo[] arrays properly typed, PhotoTimeline accepts photos prop
 
 1) Project Overview
 
@@ -41,12 +61,13 @@ Phase 1 (MVP)
 	•	Photo history: ✅ IMPLEMENTED
 	•	Per plant and per bed. ✅ IMPLEMENTED (component integrated with hooks/presenters)
 	•	Timeline scrubber with month ticks; lazy-load images. ✅ IMPLEMENTED
-	•	Tasks & notifications (basic): ✅ UI-Only (UI components only)
+	•	Tasks & notifications (basic): ✅ IMPLEMENTED
 	•	Manual reminders (e.g., "water every 3 days"). ✅ IMPLEMENTED (with simple repeat rules)
-	•	Local notifications via expo-notifications. ✅ IMPLEMENTED (with channels and categories)
+	•	Local notifications via expo-notifications. ✅ IMPLEMENTED (with channels, categories, and proper SDK types)
+	•	Notification hardening: Simulator gracefully skips push token fetching, date triggers use proper SchedulableTriggerInputTypes. ✅ IMPLEMENTED
 
 Phase 1.1 (Quality & data)
-	•	Supabase Auth (SMS/email). ✅ IMPLEMENTED
+	•	Supabase Auth (SMS/email). ✅ IMPLEMENTED (with email magic link and phone OTP login on LoginScreen)
 	•	Supabase Storage for all images (originals, sprites, thumbs). ✅ IMPLEMENTED
 	•	Task templates by plant type (watering cadence, pruning hints). ⚠️ TODO
 
@@ -74,23 +95,26 @@ Phase 2
 	•	Tauri/Electron wrapper for desktop later.
 
 4.2 Libraries
-	•	UI & canvas: @shopify/react-native-skia, react-native-gesture-handler, react-native-reanimated.
+	•	UI & canvas: @shopify/react-native-skia, react-native-gesture-handler v2, react-native-reanimated (hooks compliance).
 	•	Navigation: expo-router (with 3 tabs: Home, Beds, Tasks).
-	•	State: zustand (feature-scoped stores).
-	•	Data sync: @tanstack/react-query.
+	•	State: zustand (feature-scoped stores, including auth).
+	•	Data sync: @tanstack/react-query v5 ✅ (for all read operations, with gcTime instead of cacheTime).
 	•	Notifications: expo-notifications.
 	•	Storage: expo-file-system + Supabase Storage.
 
 4.3 App layering
-	•	UI: BedCanvas ✅, PlantSprite ✅, PlantCard ✅, PhotoTimeline ✅, TaskList ✅, TasksSandbox ✅.
+	•	UI: All components in /src/components/ ✅ - BedCanvas, PlantSprite, PlantCard, PhotoTimeline, TaskList, TaskItem, ThemedText, ThemedView, navigation/TabBarIcon, ui/* components, and LoginScreen.
 	•	Domain (framework-agnostic): plant ✅, beds ✅, tasks ✅, photos ✅, types ✅.
-	•	State: bedsStore ✅, plantsStore ✅, tasksStore ✅, photosStore ✅ (with hydrate/replaceData).
-	•	Services: TaskService ✅, NotifierExpo ✅, initNotifications ✅.
+	•	State: bedsStore, plantsStore, tasksStore, photosStore (focused on write operations and UI state; hydrate/replaceData helpers for initial data sync).
+	•	Services: TaskService ✅, NotifierExpo ✅ (with proper scheduleLocal/cancel interface), initNotifications ✅.
 	•	Ports & Adapters:
 	•	Ports: PlantRepo ✅, BedRepo ✅, PhotoRepo ✅, TaskRepo ✅, MediaStorage ✅, Notifier ✅.
-	•	Adapters: Supabase DB ✅, Supabase Storage ✅, Expo Notifications ✅.
+	•	Adapters: Supabase DB ✅, Supabase Storage ✅, Expo Notifications ✅ (NotifierExpo with current SDK compliance).
 	•	Infra: Supabase client ✅, offline cache ⚠️ TODO, edge functions ✅.
-	•	Presenters: BedPresenter ✅, PlantPresenter ✅, PhotoPresenter ✅.
+	•	Presenters: BedPresenter ✅, PlantPresenter ✅, PhotoPresenter ✅, TaskPresenter ✅.
+	•	Testing: Vitest setup ✅, comprehensive audit tooling ✅, CI workflow template ✅.
+	•	DevOps: Dependency management scripts ✅, health check automation ✅, SDK alignment validation ✅.
+	•	Architecture: Unified component structure ✅, consistent import paths ✅, single authoritative documentation ✅.
 
 ⸻
 
@@ -98,7 +122,7 @@ Phase 2
 
 Core entities
 	•	beds → id, user_id, name, base_image_url, created_at, deleted_at.
-	•	plants → id, bed_id, name, type (enum), planted_on, sprite_url, z_layer, x, y, notes, photo_count, deleted_at.
+	•	plants → id, bed_id, name, type (enum), planted_on, sprite_url, z_layer, x, y, notes, deleted_at.
 	•	tasks → id, bed_id, plant_id, kind (enum), due_on, repeat_rule, completed_on, notes, created_at, deleted_at.
 	•	plant_photos & bed_photos → partitioned monthly by captured_on, includes checksum for deduplication.
 
@@ -112,9 +136,9 @@ Flexibility
 
 6) Bed View UX
 	•	Canvas layout:
-	•	Horizontal scroll with easing + edge bounce.
-	•	Sprite layering for depth.
-	•	Bed timeline toggle (switch view between “layout” and “history”).
+	•	Horizontal scroll with easing + edge bounce (react-native-gesture-handler v2 compliant).
+	•	Sprite layering for depth with interactive z-layer controls.
+	•	Bed timeline toggle (switch view between "layout" and "history").
 	•	Bed detail panel:
 	•	Title + notes.
 	•	Aggregated photo gallery.

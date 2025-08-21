@@ -60,6 +60,57 @@ To learn more about developing your project with Expo, look at the following res
 - [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
 - [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
+## Dependency Alignment & Audit
+
+### Health Check Commands
+
+Run these commands to ensure your development environment is properly configured:
+
+```bash
+# Quick health check - runs expo-doctor and dependency version check
+npm run doctor
+
+# Comprehensive audit - full project analysis including tests and linting
+npm run audit
+
+# Clear all caches if you encounter bundling issues
+npm run start:clear
+```
+
+### Common Dependency Issues
+
+#### DateTimePicker Resolution Error
+
+If you see `Unable to resolve "@react-native-community/datetimepicker"`:
+
+1. **Install via Expo** (ensures SDK compatibility):
+   ```bash
+   npx expo install @react-native-community/datetimepicker
+   ```
+
+2. **Clear caches**:
+   ```bash
+   npm run start:clear
+   ```
+
+3. **For development builds** (iOS only):
+   ```bash
+   npx pod-install
+   ```
+
+#### General Dependency Mismatches
+
+- **Check for incompatible versions**: `npx expo install --check`
+- **Auto-fix compatible versions**: `npx expo install --fix`
+- **Verify configuration**: `npx expo config --type public`
+
+### When to Use Each Command
+
+- **`npm run doctor`**: Before starting development, after dependency changes
+- **`npm run audit`**: Before commits, when troubleshooting issues, weekly health checks
+- **`npm run start:clear`**: When Metro bundler has stale cache, after major dependency changes
+- **`npm run typecheck`**: Before commits, to catch TypeScript errors early
+
 ## Join the community
 
 Join our community of developers creating universal apps.

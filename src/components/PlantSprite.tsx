@@ -1,4 +1,4 @@
-import { BlurMask, Canvas, Group, Shadow, useImage } from '@shopify/react-native-skia';
+import { BlurMask, Canvas, Group, Image, Shadow, useImage } from '@shopify/react-native-skia';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -70,7 +70,7 @@ const PlantSprite: React.FC<PlantSpriteProps> = ({
       // This is now handled by BedCanvas directly via onTapHold, and isSelected prop
       runOnJS(onTapHold)(id, x.value, y.value, z.value);
     })
-    .minDuration(500) // For tap-hold
+    .maxDuration(500) // For tap-hold
     .maxDistance(10); // To differentiate from a drag
 
   const showFeedback = () => {

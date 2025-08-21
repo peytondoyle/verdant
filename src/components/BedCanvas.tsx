@@ -1,12 +1,12 @@
-import { Canvas, ImageSVG, rect, useSVG } from '@shopify/react-native-skia';
+import { Canvas, ImageSVG, useSVG } from '@shopify/react-native-skia';
 import { Image } from 'expo-image';
 import React from 'react';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withDecay, withSpring } from 'react-native-reanimated';
-import { ThemedText as Text } from '../../components/ThemedText';
 import { usePlantsStore } from '../../src/state/plantsStore';
 import PlantSprite from './PlantSprite';
+import { ThemedText as Text } from './ThemedText';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -58,7 +58,7 @@ const BedCanvas: React.FC<BedCanvasProps> = ({
 
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
-      translateX.value += event.changeX;
+      translateX.value += event.translationX;
     })
     .onEnd((event) => {
       translateX.value = withDecay({
@@ -101,7 +101,6 @@ const BedCanvas: React.FC<BedCanvasProps> = ({
                 y={0}
                 width={canvasWidth}
                 height={screenHeight}
-                fitbox={rect(0, 0, canvasWidth, screenHeight)}
               />
             ) : (
               <Image
@@ -125,8 +124,8 @@ const BedCanvas: React.FC<BedCanvasProps> = ({
                 onDragEnd={handleDragEnd} // Pass drag end handler
                 onZChange={handleZChange} // Pass z-layer change handler
                 isSelected={selectedPlantId === plant.id}
-                onZLayerUp={() => { /* Not implemented for read-only */ }}
-                onZLayerDown={() => { /* Not implemented for read-only */ }}
+                onZLayerUp={() => updateZLayer(plant.id, plant.z_layer + 1)}
+                onZLayerDown={() => updateZLayer(plant.id, plant.z_layer - 1)}
               />
             ))}
         </Animated.View>

@@ -11,9 +11,34 @@ const { width: screenWidth } = Dimensions.get('window');
 interface PhotoTimelineProps {
   plantId?: string;
   bedId?: string;
+  photos?: PhotoPresenter[];
 }
 
-const PhotoTimeline: React.FC<PhotoTimelineProps> = ({ plantId, bedId }) => {
+interface MonthTickProps {
+  tick: { month: string; x: number };
+  scrollX: Animated.SharedValue<number>;
+}
+
+const MonthTick: React.FC<MonthTickProps> = ({ tick, scrollX }) => {
+  const animatedTickStyle = useAnimatedStyle(() => {
+    // Adjust tick position based on scrollX
+    const translateX = tick.x - scrollX.value;
+    return {
+      transform: [{
+        translateX
+      }],
+    };
+  });
+
+  return (
+    <Animated.View style={[styles.monthTick, animatedTickStyle]}>
+      <View style={styles.tickMark} />
+      <Text style={styles.tickLabel}>{tick.month}</Text>
+    </Animated.View>
+  );
+};
+
+const PhotoTimeline: React.FC<PhotoTimelineProps> = ({ plantId, bedId, photos: propPhotos }) => {
   const scrollX = useSharedValue(0);
   const flatListRef = React.useRef<FlatList>(null);
   const [contentWidth, setContentWidth] = React.useState(0);
@@ -21,7 +46,7 @@ const PhotoTimeline: React.FC<PhotoTimelineProps> = ({ plantId, bedId }) => {
   const { data: plantPhotosData } = usePlantPhotos(plantId as string); // Conditionally fetch
   const { data: bedPhotosData } = useBedPhotos(bedId as string); // Conditionally fetch
 
-  const photos = mapPhotos((plantId ? plantPhotosData : bedPhotosData) || []);
+  const photos = propPhotos || mapPhotos((plantId ? plantPhotosData : bedPhotosData) || []);
 
   const onScroll = (event: any) => {
     scrollX.value = event.nativeEvent.contentOffset.x;
@@ -29,7 +54,7 @@ const PhotoTimeline: React.FC<PhotoTimelineProps> = ({ plantId, bedId }) => {
 
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
-      scrollX.value = Math.max(0, Math.min(contentWidth - screenWidth, scrollX.value - event.changeX));
+      scrollX.value = Math.max(0, Math.min(contentWidth - screenWidth, scrollX.value - event.translationX));
     })
     .onEnd((event) => {
       // Optional: Add a spring animation for smoother snapping after pan
@@ -43,16 +68,8 @@ const PhotoTimeline: React.FC<PhotoTimelineProps> = ({ plantId, bedId }) => {
     const photoDate = new Date(item.capturedOn); // Use capturedOn from PhotoPresenter
     const month = photoDate.toLocaleString('default', { month: 'short' });
 
-    const animatedStyle = useAnimatedStyle(() => {
-      // Implement a simple lazy loading/shimmer effect here if desired
-      // For now, direct image loading
-      return {
-        // No scale animation for now
-      };
-    });
-
     return (
-      <Animated.View style={[styles.photoContainer, animatedStyle]}>
+      <Animated.View style={styles.photoContainer}>
         <Image
           source={{ uri: item.imageUrl }}
           style={styles.image}
@@ -124,23 +141,9 @@ const PhotoTimeline: React.FC<PhotoTimelineProps> = ({ plantId, bedId }) => {
             pointerEvents="none" // Make sure gradient doesn't block touches
           />
           <View style={styles.scrubberLine} />
-          {monthTicks.map((tick, index) => {
-            const animatedTickStyle = useAnimatedStyle(() => {
-              // Adjust tick position based on scrollX
-              const translateX = tick.x - scrollX.value;
-              return {
-                transform: [{
-                  translateX
-                }],
-              };
-            });
-            return (
-              <Animated.View key={index} style={[styles.monthTick, animatedTickStyle]}>
-                <View style={styles.tickMark} />
-                <Text style={styles.tickLabel}>{tick.month}</Text>
-              </Animated.View>
-            );
-          })}
+          {monthTicks.map((tick, index) => (
+            <MonthTick key={index} tick={tick} scrollX={scrollX} />
+          ))}
         </View>
       )}
     </View>

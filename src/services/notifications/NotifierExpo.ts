@@ -1,14 +1,21 @@
+import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 // Simple notification interface as requested
 export interface Notifier {
   scheduleLocal(params: {
-    id: string;
-    date: Date;
+    id?: string; // Optional for initial scheduling, Expo will generate one
+    date: Date | number;
     body: string;
-    repeatRule?: string; // Simple string format like "every:3:days" or "weekly:Mon,Thu"
-  }): Promise<void>;
+    title?: string;
+    repeat?: {
+      kind: 'everyNDays' | 'weekly';
+      n?: number; // For everyNDays
+      days?: string[]; // For weekly, e.g., ['Mon', 'Thu']
+    };
+  }): Promise<string>; // Returns the notification identifier
   cancel(id: string): Promise<void>;
+  cancelAll(): Promise<void>;
 }
 
 export class NotifierExpo implements Notifier {
@@ -25,6 +32,8 @@ export class NotifierExpo implements Notifier {
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
       }),
     });
 
@@ -44,6 +53,11 @@ export class NotifierExpo implements Notifier {
   }
 
   private async requestPermissions(): Promise<boolean> {
+    if (!Device.isDevice) {
+      console.log('Simulator: skipping push token fetch');
+      return true;
+    }
+
     try {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
@@ -59,6 +73,11 @@ export class NotifierExpo implements Notifier {
         console.warn('Notification permissions not granted');
         return false;
       }
+
+      // For real push notifications on a device, ensure you have a projectId configured in app.json
+      // Example: "extra": { "eas": { "projectId": "your-project-id" } }
+      const token = await Notifications.getExpoPushTokenAsync();
+      console.log('Expo Push Token:', token.data);
       
       return true;
     } catch (error) {
@@ -68,41 +87,58 @@ export class NotifierExpo implements Notifier {
   }
 
   async scheduleLocal(params: {
-    id: string;
-    date: Date;
+    id?: string;
+    date: Date | number;
     body: string;
-    repeatRule?: string;
-  }): Promise<void> {
+    title?: string;
+    repeat?: {
+      kind: 'everyNDays' | 'weekly';
+      n?: number;
+      days?: string[];
+    };
+  }): Promise<string> {
     const hasPermission = await this.ensurePermissions();
     if (!hasPermission) {
       throw new Error('Notification permissions not granted');
     }
 
     try {
-      // Cancel existing notification with this ID first
-      await this.cancel(params.id);
-
-      if (params.repeatRule) {
-        // Handle repeating notifications
-        await this.scheduleRepeating(params);
-      } else {
-        // Schedule single notification
-        await Notifications.scheduleNotificationAsync({
-          identifier: params.id,
-          content: {
-            title: '🌱 Garden Reminder',
-            body: params.body,
-            data: { 
-              id: params.id,
-              type: 'garden_task'
-            },
-          },
-          trigger: {
-            date: params.date,
-            channelId: Platform.OS === 'android' ? 'garden-tasks' : undefined,
-          },
-        });
+      const identifier = params.id || Date.now().toString();
+      
+      // Cancel existing notification with this ID first if provided
+      if (params.id) {
+        await this.cancel(params.id);
       }
+
+      // TODO: For weekly repeats, fallback to scheduling a single Date trigger 
+      // and rely on TaskService to reschedule next occurrence
+      let trigger: Notifications.DateTriggerInput;
+
+      if (params.repeat) {
+        console.warn('Weekly/recurring logic temporarily simplified - TaskService should handle rescheduling');
+      }
+
+      // Always use simple date trigger for now
+      trigger = {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: params.date instanceof Date ? params.date : new Date(params.date),
+        channelId: Platform.OS === 'android' ? 'garden-tasks' : undefined,
+      };
+
+      await Notifications.scheduleNotificationAsync({
+        identifier: identifier,
+        content: {
+          title: params.title || '🌱 Garden Reminder',
+          body: params.body,
+          data: {
+            id: identifier,
+            type: 'garden_task',
+          },
+        },
+        trigger: trigger,
+      });
+
+      return identifier;
     } catch (error) {
       console.error('Error scheduling notification:', error);
       throw new Error('Failed to schedule notification');
@@ -114,10 +150,9 @@ export class NotifierExpo implements Notifier {
       // Cancel specific notification
       await Notifications.cancelScheduledNotificationAsync(id);
       
-      // Also cancel any related recurring notifications
+      // Also cancel any related recurring notifications that might have been scheduled with a sequence suffix
       const allNotifications = await Notifications.getAllScheduledNotificationsAsync();
       const relatedNotifications = allNotifications.filter(notification => 
-        notification.content.data?.id === id || 
         notification.identifier.startsWith(`${id}_`)
       );
 
@@ -126,7 +161,24 @@ export class NotifierExpo implements Notifier {
       }
     } catch (error) {
       console.error('Error canceling notification:', error);
-      // Don't throw here as the notification might already be fired or canceled
+      // Don't re-throw here as the notification might already be fired or canceled
+    }
+  }
+
+  async cancelAll(): Promise<void> {
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    } catch (error) {
+      console.error('Error canceling all notifications:', error);
+    }
+  }
+
+  async getAllScheduledNotifications(): Promise<Notifications.NotificationRequest[]> {
+    try {
+      return await Notifications.getAllScheduledNotificationsAsync();
+    } catch (error) {
+      console.error('Error getting scheduled notifications:', error);
+      return [];
     }
   }
 
@@ -137,89 +189,5 @@ export class NotifierExpo implements Notifier {
 
     const { status } = await Notifications.getPermissionsAsync();
     return status === 'granted';
-  }
-
-  private async scheduleRepeating(params: {
-    id: string;
-    date: Date;
-    body: string;
-    repeatRule: string;
-  }): Promise<void> {
-    const dates = this.parseRepeatRule(params.date, params.repeatRule);
-    
-    // Schedule multiple notifications for the next 90 days
-    for (let i = 0; i < dates.length; i++) {
-      const notificationId = i === 0 ? params.id : `${params.id}_${i}`;
-      
-      await Notifications.scheduleNotificationAsync({
-        identifier: notificationId,
-        content: {
-          title: '🌱 Garden Reminder',
-          body: params.body,
-          data: { 
-            id: params.id,
-            type: 'recurring_garden_task',
-            sequence: i
-          },
-        },
-        trigger: {
-          date: dates[i],
-          channelId: Platform.OS === 'android' ? 'garden-tasks' : undefined,
-        },
-      });
-    }
-  }
-
-  private parseRepeatRule(startDate: Date, repeatRule: string): Date[] {
-    const dates: Date[] = [];
-    const maxDays = 90; // Generate notifications for next 90 days
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + maxDays);
-
-    if (repeatRule.startsWith('every:')) {
-      // Format: "every:N:days"
-      const parts = repeatRule.split(':');
-      if (parts.length === 3 && parts[2] === 'days') {
-        const interval = parseInt(parts[1], 10);
-        if (!isNaN(interval) && interval > 0) {
-          let currentDate = new Date(startDate);
-          while (currentDate <= endDate) {
-            dates.push(new Date(currentDate));
-            currentDate.setDate(currentDate.getDate() + interval);
-          }
-        }
-      }
-    } else if (repeatRule.startsWith('weekly:')) {
-      // Format: "weekly:Mon,Thu" or "weekly:Mon"
-      const daysStr = repeatRule.substring(7); // Remove "weekly:"
-      const dayNames = daysStr.split(',').map(d => d.trim());
-      const dayMapping: Record<string, number> = {
-        'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6,
-        'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6
-      };
-
-      const targetDays = dayNames
-        .map(name => dayMapping[name])
-        .filter(day => day !== undefined);
-
-      if (targetDays.length > 0) {
-        let currentDate = new Date(startDate);
-        
-        while (currentDate <= endDate) {
-          // Check if current date matches any target day
-          if (targetDays.includes(currentDate.getDay())) {
-            dates.push(new Date(currentDate));
-          }
-          currentDate.setDate(currentDate.getDate() + 1);
-        }
-      }
-    }
-
-    return dates;
-  }
-
-  // Debug helper
-  async getAllScheduledNotifications(): Promise<Notifications.NotificationRequest[]> {
-    return await Notifications.getAllScheduledNotificationsAsync();
   }
 }

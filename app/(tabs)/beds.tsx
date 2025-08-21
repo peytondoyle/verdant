@@ -1,7 +1,8 @@
 
 import { ActivityIndicator, StyleSheet, Text } from 'react-native';
-import { ThemedView } from '../../components/ThemedView';
-import { BedCanvas } from '../../src/components/BedCanvas';
+import BedCanvas from '../../src/components/BedCanvas';
+import { ThemedView } from '../../src/components/ThemedView';
+import { Plant } from '../../src/domain/ports';
 import { useBed } from '../../src/hooks/useBed';
 
 export default function BedsScreen() {
@@ -29,8 +30,8 @@ export default function BedsScreen() {
   return (
     <ThemedView style={styles.container}>
       <BedCanvas
-        bed={{ id: bed.id, base_image_url: bed.base_image_url }}
-        plants={plants.map(plant => ({ id: plant.id, x: plant.x, y: plant.y, z_layer: plant.z_layer }))}
+        bed={{ id: bed.id, base_image_url: bed.base_image_url ?? null }}
+        plants={plants.map((plant: Plant) => ({ id: plant.id, x: plant.x, y: plant.y, z_layer: plant.z_layer }))}
         onAddPlant={() => {}}
         onAddPhoto={() => {}}
         onAddTask={() => {}}

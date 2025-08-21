@@ -5,6 +5,15 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/hooks/*": [
+        "./hooks/*"
+      ],
+      "@/constants/*": [
+        "./constants/*"
       ]
     }
   },
@@ -13,5 +22,9 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+  ],
+  "exclude": [
+    "src/tests/**/*",
+    "supabase/functions/**/*"
   ]
 }

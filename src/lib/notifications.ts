@@ -12,6 +12,8 @@ export async function initNotifications(): Promise<void> {
       shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
     }),
   });
 
@@ -84,19 +86,18 @@ async function setupIOSCategories(): Promise<void> {
         identifier: 'complete',
         buttonTitle: 'Mark Complete',
         options: {
-          opensApp: false,
+          opensAppToForeground: false,
         },
       },
       {
         identifier: 'snooze',
         buttonTitle: 'Remind Later',
         options: {
-          opensApp: false,
+          opensAppToForeground: false,
         },
       },
     ], {
       intentIdentifiers: [],
-      hiddenPreviewsBodyPlaceholder: 'Garden task reminder',
     });
 
     // Urgent task category
@@ -105,20 +106,18 @@ async function setupIOSCategories(): Promise<void> {
         identifier: 'complete',
         buttonTitle: 'Mark Complete',
         options: {
-          opensApp: false,
+          opensAppToForeground: false,
         },
       },
       {
         identifier: 'view',
         buttonTitle: 'View Details',
         options: {
-          opensApp: true,
-          foreground: true,
+          opensAppToForeground: true,
         },
       },
     ], {
       intentIdentifiers: [],
-      hiddenPreviewsBodyPlaceholder: 'Urgent garden task',
     });
 
     console.log('iOS notification categories set up successfully');
@@ -162,7 +161,7 @@ export async function getNotificationPermissionStatus(): Promise<Notifications.P
     return status;
   } catch (error) {
     console.error('Error getting notification permission status:', error);
-    return 'undetermined';
+    return 'undetermined' as Notifications.PermissionStatus;
   }
 }
 

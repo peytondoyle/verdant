@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { NotificationService, RepeatRule, Task, TaskRepo } from '../domain/ports';
+import { RepeatRule, Task, TaskRepo } from '../domain/ports';
 import { SupabaseTaskRepo } from '../services/db/SupabaseTaskRepo';
-import { ExpoNotificationService } from '../services/ExpoNotificationService';
+import { Notifier, NotifierExpo } from '../services/notifications/NotifierExpo';
 
 interface TaskState {
   // State
@@ -13,7 +13,7 @@ interface TaskState {
 
   // Dependencies
   taskRepo: TaskRepo;
-  notificationService: NotificationService;
+  notifier: Notifier;
 
   // Actions
   loadTasks: () => Promise<void>;
@@ -26,7 +26,7 @@ interface TaskState {
     plant_id?: string;
     kind: Task['kind'];
     due_on: Date;
-    repeat_rule: RepeatRule;
+    repeat_rule?: RepeatRule; // Making repeat_rule optional as per new Notifier interface
     notes?: string;
   }) => Promise<Task>;
   updateTask: (id: string, updates: Partial<Task>) => Promise<Task>;
@@ -50,7 +50,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   // Dependencies
   taskRepo: new SupabaseTaskRepo(),
-  notificationService: new ExpoNotificationService(),
+  notifier: new NotifierExpo(),
 
   // Actions
   loadTasks: async () => {
@@ -116,31 +116,30 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   createTask: async (taskData) => {
     set({ loading: true, error: null });
     try {
-      const { taskRepo, notificationService } = get();
+      const { taskRepo, notifier } = get();
       
       // Create the task
       const newTask = await taskRepo.createTask({
         ...taskData,
-        repeat_rule: taskData.repeat_rule,
+        repeat_rule: taskData.repeat_rule || { type: 'none' },
       });
 
       // Schedule notifications
-      let notificationIds: string[] = [];
       try {
-        if (newTask.repeat_rule.type === 'none') {
-          const notificationId = await notificationService.scheduleTaskReminder(newTask);
-          notificationIds = [notificationId];
-        } else {
-          notificationIds = await notificationService.scheduleRepeatingTask(newTask);
-        }
-
-        // Update task with notification IDs (store first ID as primary)
-        if (notificationIds.length > 0) {
-          await taskRepo.updateTask(newTask.id, { 
-            notification_id: notificationIds[0] 
-          });
-          newTask.notification_id = notificationIds[0];
-        }
+        const notificationId = await notifier.scheduleLocal({
+          id: newTask.id,
+          date: newTask.due_on,
+          body: `${newTask.kind} task`,
+          title: '🌱 Garden Reminder',
+          repeat: newTask.repeat_rule.type !== 'none' ? {
+            kind: newTask.repeat_rule.type === 'days' ? 'everyNDays' : 'weekly',
+            n: newTask.repeat_rule.type === 'days' ? newTask.repeat_rule.interval : undefined,
+            // TODO: Handle weekly days properly when domain model supports multiple days
+            days: newTask.repeat_rule.type === 'weekly' ? ['Mon'] : undefined,
+          } : undefined,
+        });
+        await taskRepo.updateTask(newTask.id, { notification_id: notificationId });
+        newTask.notification_id = notificationId;
       } catch (notificationError) {
         console.warn('Failed to schedule notifications for task:', notificationError);
         // Don't fail task creation if notifications fail
@@ -167,7 +166,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   updateTask: async (id: string, updates) => {
     set({ loading: true, error: null });
     try {
-      const { taskRepo, notificationService } = get();
+      const { taskRepo, notifier } = get();
       
       // Get current task to compare notification needs
       const currentTask = get().tasks.find(t => t.id === id);
@@ -178,27 +177,26 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       if (currentTask && (updates.due_on || updates.repeat_rule)) {
         // Cancel existing notifications
         if (currentTask.notification_id) {
-          await notificationService.cancelAllTaskNotifications(currentTask.id);
+          await notifier.cancel(currentTask.notification_id);
         }
 
         // Schedule new notifications if task is not completed
         if (!updatedTask.completed_on) {
           try {
-            let notificationIds: string[] = [];
-            if (updatedTask.repeat_rule.type === 'none') {
-              const notificationId = await notificationService.scheduleTaskReminder(updatedTask);
-              notificationIds = [notificationId];
-            } else {
-              notificationIds = await notificationService.scheduleRepeatingTask(updatedTask);
-            }
-
-            // Update task with new notification ID
-            if (notificationIds.length > 0) {
-              await taskRepo.updateTask(updatedTask.id, { 
-                notification_id: notificationIds[0] 
-              });
-              updatedTask.notification_id = notificationIds[0];
-            }
+            const newNotificationId = await notifier.scheduleLocal({
+              id: updatedTask.id,
+              date: updatedTask.due_on,
+              body: `${updatedTask.kind} task`,
+              title: '🌱 Garden Reminder',
+              repeat: updatedTask.repeat_rule.type !== 'none' ? {
+                kind: updatedTask.repeat_rule.type === 'days' ? 'everyNDays' : 'weekly',
+                n: updatedTask.repeat_rule.type === 'days' ? updatedTask.repeat_rule.interval : undefined,
+                // TODO: Handle weekly days properly when domain model supports multiple days
+                days: updatedTask.repeat_rule.type === 'weekly' ? ['Mon'] : undefined,
+              } : undefined,
+            });
+            await taskRepo.updateTask(updatedTask.id, { notification_id: newNotificationId });
+            updatedTask.notification_id = newNotificationId;
           } catch (notificationError) {
             console.warn('Failed to reschedule notifications for task:', notificationError);
           }
@@ -224,7 +222,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   deleteTask: async (id: string) => {
     set({ loading: true, error: null });
     try {
-      const { taskRepo, notificationService } = get();
+      const { taskRepo, notifier } = get();
       
       // Get task before deletion to cancel notifications
       const taskToDelete = get().tasks.find(t => t.id === id);
@@ -235,7 +233,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       // Cancel associated notifications
       if (taskToDelete?.notification_id) {
         try {
-          await notificationService.cancelAllTaskNotifications(id);
+          await notifier.cancel(taskToDelete.notification_id);
         } catch (notificationError) {
           console.warn('Failed to cancel notifications for deleted task:', notificationError);
         }
@@ -262,14 +260,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   completeTask: async (id: string, completedOn?: Date) => {
     set({ loading: true, error: null });
     try {
-      const { taskRepo, notificationService } = get();
+      const { taskRepo, notifier } = get();
       
       const completedTask = await taskRepo.completeTask(id, completedOn);
 
       // Cancel associated notifications since task is completed
       if (completedTask.notification_id) {
         try {
-          await notificationService.cancelAllTaskNotifications(id);
+          await notifier.cancel(completedTask.notification_id);
         } catch (notificationError) {
           console.warn('Failed to cancel notifications for completed task:', notificationError);
         }

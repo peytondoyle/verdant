@@ -2,6 +2,7 @@ import { Plant } from '../domain/ports';
 
 export interface PlantPresenter {
   id: string;
+  bedId: string;
   name: string;
   type: 'Perennial' | 'Annual' | 'Edible';
   plantedOn: string; // Formatted date string
@@ -15,6 +16,7 @@ export interface PlantPresenter {
 export const mapPlant = (plant: Plant): PlantPresenter => {
   return {
     id: plant.id,
+    bedId: plant.bed_id,
     name: plant.name,
     type: plant.type,
     plantedOn: plant.planted_on.toLocaleDateString(),

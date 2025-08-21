@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Plant, PlantRepo } from '../domain/ports';
+import { Plant } from '../domain/ports';
 import { debounce } from '../lib/utils'; // Import the debounce utility
 import { SupabasePlantRepo } from '../services/db/SupabasePlantRepo';
 
@@ -8,20 +8,12 @@ interface PlantsState {
   plants: Plant[];
   plantsByBed: Record<string, Plant[]>;
   selectedPlant: Plant | null;
-  loading: boolean;
-  error: string | null;
-
-  // Dependencies
-  plantRepo: PlantRepo;
 
   // Actions
-  loadPlants: (bedId: string) => Promise<void>;
-  getPlant: (id: string) => Promise<Plant | null>;
   createPlant: (plantData: Omit<Plant, 'id' | 'created_at'> & { bed_id: string; x: number; y: number; z_layer: number; sprite_url?: string }) => Promise<Plant>;
   updatePlant: (id: string, updates: Partial<Plant>) => Promise<Plant>;
   deletePlant: (id: string) => Promise<void>;
   selectPlant: (plant: Plant | null) => void;
-  clearError: () => void;
   updatePosition: (id: string, newPosition: { x: number; y: number }) => void; // New action
   updateZLayer: (id: string, newZLayer: number) => void; // New action
 
@@ -33,17 +25,19 @@ interface PlantsState {
   replaceData: (plants: Plant[]) => void;
 }
 
+const plantRepo = new SupabasePlantRepo();
+
 export const usePlantsStore = create<PlantsState>((set, get) => {
   const debouncedUpdatePlant = debounce(async (id: string, updates: Partial<Plant>) => {
     try {
-      await get().plantRepo.update(id, updates);
+      await plantRepo.update(id, updates);
     } catch (error) {
       // Rollback on error
       set(state => {
         const plants = state.plants.map(p =>
           p.id === id ? { ...p, ...state.plants.find(oldP => oldP.id === id) } : p
         );
-        return { plants, error: error instanceof Error ? error.message : 'Failed to update plant remotely' };
+        return { plants };
       });
     }
   }, 300);
@@ -53,137 +47,56 @@ export const usePlantsStore = create<PlantsState>((set, get) => {
     plants: [],
     plantsByBed: {},
     selectedPlant: null,
-    loading: false,
-    error: null,
-
-    // Dependencies
-    plantRepo: new SupabasePlantRepo(),
 
     // Actions
-    loadPlants: async (bedId: string) => {
-      set({ loading: true, error: null });
-      try {
-        const plants = await get().plantRepo.listPlants(bedId);
-        
-        // Update both plants array and plantsByBed mapping
-        const currentPlantsByBed = get().plantsByBed;
-        set({ 
-          plants,
-          plantsByBed: {
-            ...currentPlantsByBed,
-            [bedId]: plants
-          }
-        });
-      } catch (error) {
-        set({ error: error instanceof Error ? error.message : 'Failed to load plants' });
-      } finally {
-        set({ loading: false });
-      }
-    },
-
-    getPlant: async (id: string) => {
-      set({ loading: true, error: null });
-      try {
-        const plant = await get().plantRepo.getPlant(id);
-        if (plant) {
-          // Update the plant in local state if it exists
-          const currentPlants = get().plants;
-          const plantIndex = currentPlants.findIndex(p => p.id === id);
-          if (plantIndex >= 0) {
-            const updatedPlants = [...currentPlants];
-            updatedPlants[plantIndex] = plant;
-            set({ plants: updatedPlants });
-          } else {
-            // Add to local state if not present
-            set({ plants: [...currentPlants, plant] });
-          }
-        }
-        return plant;
-      } catch (error) {
-        set({ error: error instanceof Error ? error.message : 'Failed to get plant' });
-        return null;
-      } finally {
-        set({ loading: false });
-      }
-    },
-
     createPlant: async (plantData) => {
-      set({ loading: true, error: null });
-      try {
-        const newPlant = await get().plantRepo.create(plantData);
-        
-        // Update local state
-        set(state => ({
-          plants: [...state.plants, newPlant],
-          plantsByBed: { ...state.plantsByBed, [newPlant.bed_id!]: [...(state.plantsByBed[newPlant.bed_id!] || []), newPlant] }
-        }));
+      const newPlant = await plantRepo.create(plantData);
+      
+      // Update local state
+      set(state => ({
+        plants: [...state.plants, newPlant],
+        plantsByBed: { ...state.plantsByBed, [newPlant.bed_id!]: [...(state.plantsByBed[newPlant.bed_id!] || []), newPlant] }
+      }));
 
-        return newPlant;
-      } catch (error) {
-        set({ error: error instanceof Error ? error.message : 'Failed to create plant' });
-        throw error;
-      } finally {
-        set({ loading: false });
-      }
+      return newPlant;
     },
 
     updatePlant: async (id: string, updates) => {
-      set({ loading: true, error: null });
-      try {
-        const updatedPlant = await get().plantRepo.update(id, updates);
+      const updatedPlant = await plantRepo.update(id, updates);
 
-        // Update local state
-        set(state => ({
-          plants: state.plants.map(plant => plant.id === id ? updatedPlant : plant),
-          plantsByBed: Object.fromEntries(
-            Object.entries(state.plantsByBed).map(([bedId, plants]) => [
-              bedId,
-              plants.map(plant => plant.id === id ? updatedPlant : plant)
-            ])
-          ),
-          selectedPlant: state.selectedPlant?.id === id ? updatedPlant : state.selectedPlant,
-        }));
+      // Update local state
+      set(state => ({
+        plants: state.plants.map(plant => plant.id === id ? updatedPlant : plant),
+        plantsByBed: Object.fromEntries(
+          Object.entries(state.plantsByBed).map(([bedId, plants]) => [
+            bedId,
+            plants.map(plant => plant.id === id ? updatedPlant : plant)
+          ])
+        ),
+        selectedPlant: state.selectedPlant?.id === id ? updatedPlant : state.selectedPlant,
+      }));
 
-        return updatedPlant;
-      } catch (error) {
-        set({ error: error instanceof Error ? error.message : 'Failed to update plant' });
-        throw error;
-      } finally {
-        set({ loading: false });
-      }
+      return updatedPlant;
     },
 
     deletePlant: async (id: string) => {
-      set({ loading: true, error: null });
-      try {
-        await get().plantRepo.delete(id);
+      await plantRepo.delete(id);
 
-        // Update local state
-        set(state => ({
-          plants: state.plants.filter(plant => plant.id !== id),
-          plantsByBed: Object.fromEntries(
-            Object.entries(state.plantsByBed).map(([bedId, plants]) => [
-              bedId,
-              plants.filter(plant => plant.id !== id)
-            ])
-          ),
-          selectedPlant: state.selectedPlant?.id === id ? null : state.selectedPlant,
-        }));
-
-      } catch (error) {
-        set({ error: error instanceof Error ? error.message : 'Failed to delete plant' });
-        throw error;
-      } finally {
-        set({ loading: false });
-      }
+      // Update local state
+      set(state => ({
+        plants: state.plants.filter(plant => plant.id !== id),
+        plantsByBed: Object.fromEntries(
+          Object.entries(state.plantsByBed).map(([bedId, plants]) => [
+            bedId,
+            plants.filter(plant => plant.id !== id)
+          ])
+        ),
+        selectedPlant: state.selectedPlant?.id === id ? null : state.selectedPlant,
+      }));
     },
 
     selectPlant: (plant: Plant | null) => {
       set({ selectedPlant: plant });
-    },
-
-    clearError: () => {
-      set({ error: null });
     },
 
     updatePosition: (id: string, newPosition: { x: number; y: number }) => {
@@ -252,7 +165,7 @@ export const usePlantsStore = create<PlantsState>((set, get) => {
         }
       });
 
-      set({ plants, plantsByBed, loading: false, error: null });
+      set({ plants, plantsByBed });
     },
 
     replaceData: (plants: Plant[]) => {
@@ -268,7 +181,7 @@ export const usePlantsStore = create<PlantsState>((set, get) => {
         }
       });
 
-      set({ plants, plantsByBed, selectedPlant: null, loading: false, error: null });
+      set({ plants, plantsByBed, selectedPlant: null });
     },
   };
 });

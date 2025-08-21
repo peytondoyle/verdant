@@ -1,8 +1,9 @@
 import React from 'react';
-import { FlatList, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Task } from '../domain/ports';
+import { mapTask } from '../presenters/TaskPresenter';
 import { TaskItem } from './TaskItem';
 import { ThemedText } from './ThemedText';
-import { Task } from '../src/domain/ports';
 
 interface TaskListProps {
   tasks: Task[];
@@ -19,18 +20,21 @@ export function TaskList({
   onDelete,
   onSelect,
 }: TaskListProps) {
-  const renderItem = ({ item }: { item: Task }) => (
-    <TaskItem
-      id={item.id}
-      title={item.kind}
-      dueOn={item.due_on}
-      repeatRule={item.repeat_rule.type !== 'none' ? item.repeat_rule.type : undefined}
-      completedOn={item.completed_on}
-      onComplete={onComplete}
-      onDelete={onDelete}
-      onPress={onSelect}
-    />
-  );
+  const renderItem = ({ item }: { item: Task }) => {
+    const taskPresenter = mapTask(item);
+    return (
+      <TaskItem
+        id={taskPresenter.id}
+        title={taskPresenter.kind}
+        dueOn={taskPresenter.dueOn}
+        repeatRule={taskPresenter.repeatRule.type !== 'none' ? taskPresenter.repeatRule.type : undefined}
+        completedOn={taskPresenter.completedOn}
+        onComplete={onComplete}
+        onDelete={onDelete}
+        onPress={onSelect}
+      />
+    );
+  };
 
   return (
     <View style={styles.container}>

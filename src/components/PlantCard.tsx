@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Photo } from '../domain/ports';
 import { usePlantPhotos } from '../hooks/usePhotos'; // Assuming usePlantPhotos is in usePhotos.ts
 import { usePlant } from '../hooks/usePlants'; // Assuming usePlant is in usePlants.ts
 import { mapPhotos } from '../presenters/PhotoPresenter';
@@ -15,7 +16,8 @@ const PlantCard: React.FC<PlantCardProps> = ({ plantId }) => {
   const { data: plantPhotosData } = usePlantPhotos(plantId);
 
   const plant = plantData ? mapPlant(plantData) : null;
-  const photos = plantPhotosData ? mapPhotos(plantPhotosData) : [];
+  const photos: Photo[] = plantPhotosData ?? [];
+  const photoPresenters = mapPhotos(photos);
 
   if (!plant) {
     return <Text>Loading plant data...</Text>;
@@ -37,8 +39,8 @@ const PlantCard: React.FC<PlantCardProps> = ({ plantId }) => {
 
       <View style={styles.photosSection}>
         <Text style={styles.sectionTitle}>Photos</Text>
-        {photos && photos.length > 0 ? (
-          <PhotoTimeline photos={photos} />
+        {photoPresenters && photoPresenters.length > 0 ? (
+          <PhotoTimeline photos={photoPresenters} />
         ) : (
           <Text>No photos available.</Text>
         )}

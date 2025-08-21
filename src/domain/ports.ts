@@ -3,6 +3,7 @@
 
 export interface Plant {
   id: string;
+  bed_id: string;
   name: string;
   type: 'Perennial' | 'Annual' | 'Edible';
   planted_on: Date;
@@ -55,9 +56,19 @@ export interface TaskRepo {
 }
 
 export interface NotificationService {
-  scheduleTaskReminder(task: Task): Promise<string>;
-  cancelNotification(notificationId: string): Promise<void>;
-  scheduleRepeatingTask(task: Task): Promise<string[]>;
+  scheduleLocal(params: {
+    id?: string;
+    date: Date | number;
+    body: string;
+    title?: string;
+    repeat?: {
+      kind: 'everyNDays' | 'weekly';
+      n?: number;
+      days?: string[];
+    };
+  }): Promise<string>;
+  cancel(id: string): Promise<void>;
+  cancelAll(): Promise<void>;
 }
 
 export interface Bed {

@@ -65,7 +65,7 @@ export class SupabasePhotoRepo implements PhotoRepo {
     } as T;
   }
 
-  async listPlantPhotos(plantId: string): Promise<PlantPhoto[]> {
+  async getPlantPhotos(plantId: string): Promise<PlantPhoto[]> {
     const { data, error } = await supabase
       .from('plant_photos')
       .select('*')
@@ -84,7 +84,7 @@ export class SupabasePhotoRepo implements PhotoRepo {
     }));
   }
 
-  async listBedPhotos(bedId: string): Promise<BedPhoto[]> {
+  async getBedPhotos(bedId: string): Promise<BedPhoto[]> {
     const { data, error } = await supabase
       .from('bed_photos')
       .select('*')
@@ -103,19 +103,15 @@ export class SupabasePhotoRepo implements PhotoRepo {
     }));
   }
 
-  async add(photo: Omit<PlantPhoto, 'id' | 'captured_on'>): Promise<PlantPhoto>;
-  async add(photo: Omit<BedPhoto, 'id' | 'captured_on'>): Promise<BedPhoto>;
-  async add(photo: Omit<PlantPhoto | BedPhoto, 'id' | 'captured_on'>): Promise<PlantPhoto | BedPhoto> {
-    if ('plant_id' in photo) {
-      return this.addPhoto(photo as Omit<PlantPhoto, 'id' | 'captured_on'>, 'plant_photos');
-    } else if ('bed_id' in photo) {
-      return this.addPhoto(photo as Omit<BedPhoto, 'id' | 'captured_on'>, 'bed_photos');
-    } else {
-      throw new Error('Photo must be associated with a plant or a bed.');
-    }
+  async addPlantPhoto(photo: Omit<PlantPhoto, 'id' | 'captured_on'>): Promise<PlantPhoto> {
+    return this.addPhoto(photo, 'plant_photos');
   }
 
-  async delete(id: string): Promise<void> {
+  async addBedPhoto(photo: Omit<BedPhoto, 'id' | 'captured_on'>): Promise<BedPhoto> {
+    return this.addPhoto(photo, 'bed_photos');
+  }
+
+  async deletePhoto(id: string): Promise<void> {
     const { error: plantPhotoError } = await supabase
       .from('plant_photos')
       .update({ deleted_at: new Date().toISOString() })
