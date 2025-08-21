@@ -35,6 +35,24 @@ npm run reset-project
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
+## Supabase Setup
+
+1.  **Environment Variables**: Create a `.env` file in the project root with your Supabase project URL and anon key:
+    ```
+    EXPO_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
+    EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+    ```
+
+2.  **Database Migrations**: Apply the Supabase schema migrations:
+    ```bash
+    supabase db push
+    ```
+
+3.  **Seed Data (Optional)**: Populate your database with seed data for development:
+    ```bash
+    supabase db seed
+    ```
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:

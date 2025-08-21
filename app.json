@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "verdant-temp",
-    "slug": "verdant-temp",
+    "name": "verdant",
+    "slug": "verdant",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "verdanttemp",
+    "scheme": "verdant",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
